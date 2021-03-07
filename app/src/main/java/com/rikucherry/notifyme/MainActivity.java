@@ -4,7 +4,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -16,6 +19,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 
 public class MainActivity extends AppCompatActivity {
+
+    // 用户更新通知这一行为的id
+    private static final String ACTION_UPDATE_NOTIFICATION = BuildConfig.APPLICATION_ID + ".ACTION_UPDATE";
+    private NotificationReceiver mReceiver = new NotificationReceiver();
 
     private Button buttonNotify;
     private Button buttonUpdate;
@@ -39,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
 
         setNotificationButtonState(true,false,false);
 
+        // 注册广播接收器以接收更新通知的行为
+        registerReceiver(mReceiver, new IntentFilter(ACTION_UPDATE_NOTIFICATION));
+
         createNotificationChannel();
         buttonNotify.setOnClickListener(view -> {
             sendNotification();
@@ -54,6 +64,12 @@ public class MainActivity extends AppCompatActivity {
             setNotificationButtonState(true,false,false);
         });
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(mReceiver);
+        super.onDestroy();
     }
 
     public void createNotificationChannel() {
@@ -73,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private NotificationCompat.Builder  getNotificationBuilder(){
+    private NotificationCompat.Builder getNotificationBuilder(){
 
         Intent notificationIntent = new Intent(this,MainActivity.class);
         // note：通知的content intent必须被pending intent封装
@@ -97,8 +113,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendNotification() {
-        Notification customisedNotification = getNotificationBuilder().build();
-        mNotifyManager.notify(NOTIFICATION_ID,customisedNotification);
+        Intent updateIntent = new Intent(ACTION_UPDATE_NOTIFICATION);
+        PendingIntent updatePendingIntent = PendingIntent.getBroadcast(
+                this, NOTIFICATION_ID, updateIntent, PendingIntent.FLAG_ONE_SHOT);
+
+        NotificationCompat.Builder customisedBuilder = getNotificationBuilder();
+        customisedBuilder.addAction(R.drawable.ic_update, "更新通知", updatePendingIntent);
+
+        mNotifyManager.notify(NOTIFICATION_ID,customisedBuilder.build());
     }
 
     private void updateNotification() {
@@ -122,6 +144,17 @@ public class MainActivity extends AppCompatActivity {
         buttonNotify.setEnabled(isNotifyEnabled);
         buttonUpdate.setEnabled(isUpdateEnabled);
         buttonCancel.setEnabled(isCancelEnabled);
+    }
+
+    /**
+     * Task3
+     */
+    public class NotificationReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateNotification();
+        }
     }
 
 }
