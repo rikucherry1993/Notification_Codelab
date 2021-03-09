@@ -22,6 +22,8 @@ public class MainActivity extends AppCompatActivity {
 
     // 用户更新通知这一行为的id
     private static final String ACTION_UPDATE_NOTIFICATION = BuildConfig.APPLICATION_ID + ".ACTION_UPDATE";
+    private static final String ACTION_DELETE_NOTIFICATION = BuildConfig.APPLICATION_ID + ".ACTION_DELETE";
+
     private NotificationReceiver mReceiver = new NotificationReceiver();
 
     private Button buttonNotify;
@@ -47,7 +49,12 @@ public class MainActivity extends AppCompatActivity {
         setNotificationButtonState(true,false,false);
 
         // 注册广播接收器以接收更新通知的行为
-        registerReceiver(mReceiver, new IntentFilter(ACTION_UPDATE_NOTIFICATION));
+        IntentFilter updateFilter = new IntentFilter(ACTION_UPDATE_NOTIFICATION);
+        IntentFilter deleteFilter = new IntentFilter(ACTION_DELETE_NOTIFICATION);
+
+        registerReceiver(mReceiver, updateFilter);
+        registerReceiver(mReceiver, deleteFilter);
+
 
         createNotificationChannel();
         buttonNotify.setOnClickListener(view -> {
@@ -98,15 +105,20 @@ public class MainActivity extends AppCompatActivity {
         PendingIntent notificationPendingIntent = PendingIntent.getActivity(this,
                 NOTIFICATION_ID,notificationIntent,PendingIntent.FLAG_UPDATE_CURRENT);
 
+        Intent deleteIntent = new Intent(ACTION_DELETE_NOTIFICATION);
+        PendingIntent deletePendingIntent = PendingIntent.getBroadcast(
+                this,NOTIFICATION_ID,deleteIntent,PendingIntent.FLAG_CANCEL_CURRENT);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, PRIMARY_CHANNEL_ID)
                 .setContentTitle("收到一则提醒！")
                 .setContentText("开饭了！")
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(notificationPendingIntent)
+                .setDeleteIntent(deletePendingIntent)
                 .setAutoCancel(true); // 用户点击后自动关闭
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
-                builder.setPriority(NotificationCompat.PRIORITY_HIGH) // for API < 28
+                builder.setPriority(NotificationCompat.PRIORITY_HIGH) // for API < 26
                 .setDefaults(NotificationCompat.DEFAULT_ALL);}
 
         return builder;
@@ -147,13 +159,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Task3
+     * 接收用户对通知的操作，并更新通知与画面
+     * 操作：更新通知或关闭通知
      */
     public class NotificationReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            updateNotification();
+            switch (intent.getAction()){
+                case ACTION_UPDATE_NOTIFICATION:
+                    updateNotification();
+                    setNotificationButtonState(false,false,true);
+                    break;
+                case ACTION_DELETE_NOTIFICATION:
+                    cancelNotification();
+                    setNotificationButtonState(true,false,false);
+                    break;
+            }
         }
     }
 
