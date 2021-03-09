@@ -8,8 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -136,12 +134,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateNotification() {
-        Bitmap notificationImage = BitmapFactory.decodeResource(getResources(), R.drawable.mascot_1);
+        // BigPictureStyle
+//        Bitmap notificationImage = BitmapFactory.decodeResource(getResources(), R.drawable.mascot_1);
+//        Notification updatedNotification = getNotificationBuilder()
+//                .setStyle(new NotificationCompat.BigPictureStyle()
+//                .bigPicture(notificationImage)
+//                .setBigContentTitle("已更新您的通知！"))
+//                .build();
+        // InboxStyle
         Notification updatedNotification = getNotificationBuilder()
-                .setStyle(new NotificationCompat.BigPictureStyle()
-                .bigPicture(notificationImage)
-                .setBigContentTitle("已更新您的通知！"))
-                .build();
+                .setStyle(new NotificationCompat.InboxStyle()
+                        .setBigContentTitle("换了一种风格的通知！")
+                        .setSummaryText("换了一种欢了一种换了一种风格"))
+                        .build();
 
         mNotifyManager.notify(NOTIFICATION_ID,updatedNotification);
     }
